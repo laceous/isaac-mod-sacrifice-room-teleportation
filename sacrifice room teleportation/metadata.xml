@@ -22,14 +22,14 @@ You can also teleport to other story bosses:
     [*]Cathedral / Isaac
 [/list]
 
-Unfortunately, the `StartStageTransition` function can randomly crash the game. As a workaround, to show the proper stage transition animation, we'll give Dream Catcher starting on the 12th spike hit.
+Unfortunately, the [i]StartStageTransition[/i] function can randomly crash the game. As a workaround, to show the proper stage transition animation, we'll give Dream Catcher starting on the 12th spike hit.
 
 Mod Config Menu will let you change the probability for each destination. Since you'll be getting key pieces from Sacrifice Rooms, there's also options to enable some extra functionality:
 [list]
     [*]Open the red room closet in Home with key pieces
     [*]Transform the key pieces into knife pieces in the Mausoleum II boss fight (only if you don't have a full knife)
 [/list]</description>
-    <version>1.1</version>
+    <version>1.2</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Rooms"/>
