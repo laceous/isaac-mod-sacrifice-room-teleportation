@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <name>Sacrifice Room Teleportation</name>
+    <directory>sacrifice room teleportation</directory>
+    <id>3063518049</id>
+    <description>By default, Sacrifice Rooms allow you to teleport to the Dark Room. This mod allows you to teleport to more ending destinations:
+[list]
+    [*]Dark Room / The Lamb
+    [*]Chest / ???
+    [*]The Void / Delirium
+    [*]Corpse II / Mother
+    [*]Home / The Beast
+[/list]
+
+You can also teleport to other story bosses:
+[list]
+    [*]Depths II / Mom
+    [*]Mausoleum II / Mom
+    [*]Womb II / Mom's Heart
+    [*]??? / Hush
+    [*]Sheol / Satan
+    [*]Cathedral / Isaac
+[/list]
+
+Unfortunately, the `StartStageTransition` function can randomly crash the game. As a workaround, to show the proper stage transition animation, we'll give Dream Catcher starting on the 12th spike hit.
+
+Mod Config Menu will let you change the probability for each destination. Since you'll be getting key pieces from Sacrifice Rooms, there's also options to enable some extra functionality:
+[list]
+    [*]Open the red room closet in Home with key pieces
+    [*]Transform the key pieces into knife pieces in the Mausoleum II boss fight (only if you don't have a full knife)
+[/list]</description>
+    <version>1.1</version>
+    <visibility>Public</visibility>
+    <tag id="Lua"/>
+    <tag id="Rooms"/>
+    <tag id="Tweaks"/>
+</metadata>
