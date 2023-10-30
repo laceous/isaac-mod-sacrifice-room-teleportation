@@ -5,10 +5,12 @@ local game = Game()
 mod.onGameStartHasRun = false
 
 mod.seed = nil
+mod.stage = nil
 mod.rngShiftIdx = 35
 
 mod.state = {}
 mod.state.giveDreamCatcher = true
+mod.state.spoilTeleport = false
 mod.state.openClosetWithKeyPieces = false
 mod.state.transformKeyPiecesToKnifePieces = false
 mod.state.stages = { -- 0-10
@@ -23,6 +25,8 @@ mod.state.stages = { -- 0-10
   mausoleumII = 0,
   wombII = 0,
   hush = 0, -- ???
+  basementI = 0,
+  preAscent = 0,
 }
 
 function mod:onGameStart()
@@ -30,13 +34,13 @@ function mod:onGameStart()
     local _, state = pcall(json.decode, mod:LoadData())
     
     if type(state) == 'table' then
-      for _, v in ipairs({ 'giveDreamCatcher', 'openClosetWithKeyPieces', 'transformKeyPiecesToKnifePieces' }) do
+      for _, v in ipairs({ 'giveDreamCatcher', 'spoilTeleport', 'openClosetWithKeyPieces', 'transformKeyPiecesToKnifePieces' }) do
         if type(state[v]) == 'boolean' then
           mod.state[v] = state[v]
         end
       end
       if type(state.stages) == 'table' then
-        for _, v in ipairs({ 'darkRoom', 'chest', 'theVoid', 'corpseII', 'home', 'sheol', 'cathedral', 'depthsII', 'mausoleumII', 'wombII', 'hush' }) do
+        for _, v in ipairs({ 'darkRoom', 'chest', 'theVoid', 'corpseII', 'home', 'sheol', 'cathedral', 'depthsII', 'mausoleumII', 'wombII', 'hush', 'basementI', 'preAscent' }) do
           if math.type(state.stages[v]) == 'integer' then
             mod.state.stages[v] = state.stages[v]
           end
@@ -52,6 +56,7 @@ end
 function mod:onGameExit()
   mod:save()
   mod.seed = nil
+  mod.stage = nil
   mod.onGameStartHasRun = false
 end
 
@@ -72,48 +77,76 @@ function mod:onNewRoom()
   local room = level:GetCurrentRoom()
   local roomDesc = level:GetCurrentRoomDesc()
   local stage = level:GetStage()
-  local stageType = level:GetStageType()
+  
+  mod:updateEid()
   
   if mod.seed then
     if stage == LevelStage.STAGE6 and not level:IsAltStage() and -- dark room
        level:GetCurrentRoomIndex() == level:GetStartingRoomIndex() and room:IsFirstVisit() and mod:getCurrentDimension() == 0
     then
-      local stage = mod:getRandomStage(mod.seed)
+      local stageName = mod:getRandomStage(mod.seed)
       local rng = RNG()
       rng:SetSeed(mod.seed, mod.rngShiftIdx)
       mod.seed = nil
       
-      if stage == 'chest' then
+      if stageName == 'chest' then
+        mod:forgetStageSeeds(LevelStage.STAGE6, mod.stage)
         Isaac.ExecuteCommand('stage 11a')
-      elseif stage == 'theVoid' then
+      elseif stageName == 'theVoid' then
+        mod:forgetStageSeeds(LevelStage.STAGE7, mod.stage)
         Isaac.ExecuteCommand('stage 12')
-      elseif stage == 'corpseII' then
+      elseif stageName == 'corpseII' then
+        mod:forgetStageSeeds(LevelStage.STAGE4_2 + 1, mod.stage)
         Isaac.ExecuteCommand('stage 8c')
-      elseif stage == 'home' then
+      elseif stageName == 'home' then
+        mod:forgetStageSeeds(LevelStage.STAGE8, mod.stage)
         Isaac.ExecuteCommand('stage 13')
-      elseif stage == 'sheol' then
+      elseif stageName == 'sheol' then
+        mod:forgetStageSeeds(LevelStage.STAGE5, mod.stage)
         Isaac.ExecuteCommand('stage 10')
-      elseif stage == 'cathedral' then
+      elseif stageName == 'cathedral' then
+        mod:forgetStageSeeds(LevelStage.STAGE5, mod.stage)
         Isaac.ExecuteCommand('stage 10a')
-      elseif stage == 'depthsII' then
+      elseif stageName == 'depthsII' then
         local stages = { '6', '6a', '6b' }
-        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
-        Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
-      elseif stage == 'mausoleumII' then
-        local stages = { '6c', '6d' }
-        --game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
+        game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
         game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
         game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+        mod:forgetStageSeeds(LevelStage.STAGE3_2, mod.stage)
         Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
-      elseif stage == 'wombII' then
+      elseif stageName == 'mausoleumII' then
+        local stages = { '6c', '6d' }
+        game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
+        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
+        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+        mod:forgetStageSeeds(LevelStage.STAGE3_2 + 1, mod.stage)
+        Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
+      elseif stageName == 'wombII' then
         local stages = { '8', '8a', '8b' }
+        mod:forgetStageSeeds(LevelStage.STAGE4_2, mod.stage)
         Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
-      elseif stage == 'hush' then
+      elseif stageName == 'hush' then
+        mod:forgetStageSeeds(LevelStage.STAGE4_3, mod.stage)
         Isaac.ExecuteCommand('stage 9')
+      elseif stageName == 'basementI' then
+        local stages = { '1', '1a', '1b' }
+        game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
+        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
+        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+        mod:forgetStageSeeds(LevelStage.STAGE1_1, mod.stage)
+        Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
+      elseif stageName == 'preAscent' then
+        local stages = { '6c', '6d' }
+        game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
+        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, true)
+        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+        mod:forgetStageSeeds(LevelStage.STAGE3_2 + 1, mod.stage)
+        Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
       end
     end
     
     mod.seed = nil
+    mod.stage = nil
   end
   
   if mod.state.openClosetWithKeyPieces then
@@ -140,8 +173,11 @@ function mod:onNewRoom()
   
   if mod.state.transformKeyPiecesToKnifePieces then
     -- mausoleum ii/xl
-    if (stage == LevelStage.STAGE3_2 or (mod:isCurseOfTheLabyrinth() and stage == LevelStage.STAGE3_1)) and (stageType == StageType.STAGETYPE_REPENTANCE or stageType == StageType.STAGETYPE_REPENTANCE_B) and
-       roomDesc.SafeGridIndex == level:GetRooms():Get(level:GetLastBossRoomListIndex()).SafeGridIndex and room:IsFirstVisit()
+    if (stage == LevelStage.STAGE3_2 or (mod:isCurseOfTheLabyrinth() and stage == LevelStage.STAGE3_1)) and mod:isRepentanceStageType() and
+       roomDesc.SafeGridIndex == level:GetRooms():Get(level:GetLastBossRoomListIndex()).SafeGridIndex and room:IsFirstVisit() and
+       not game:GetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED) and
+       not game:GetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT) and
+       not game:GetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH)
     then
       mod:transformKeyPiecesToKnifePieces()
     end
@@ -154,7 +190,9 @@ end
 -- level:SetStage + 'forget me now' seems to get overriden by the teleport to the dark room
 function mod:onPlayerUpdate(player)
   if not game:IsGreedMode() and game:IsPaused() and not mod.seed then
-    local room = game:GetRoom()
+    local level = game:GetLevel()
+    local room = level:GetCurrentRoom()
+    local stage = level:GetStage()
     local sprite = player:GetSprite()
     
     if room:GetType() == RoomType.ROOM_SACRIFICE then
@@ -165,6 +203,7 @@ function mod:onPlayerUpdate(player)
         if mod:hasSpikesGte(player.Position, 12) then
           -- adding dream catcher from here doesn't work correctly
           mod.seed = room:GetSpawnSeed() -- GetAwardSeed, GetDecorationSeed
+          mod.stage = mod:isRepentanceStageType() and stage + 1 or stage
         end
       end
     end
@@ -233,6 +272,10 @@ function mod:hasSpikesGte(pos, num)
 end
 
 function mod:getRandomStage(seed)
+  local function sortStages(a, b)
+    return a.name < b.name
+  end
+  
   local weightedStages = {}
   local totalWeight = 0
   
@@ -240,6 +283,9 @@ function mod:getRandomStage(seed)
     table.insert(weightedStages, { name = k, weight = v })
     totalWeight = totalWeight + v
   end
+  
+  table.sort(weightedStages, sortStages)
+  
   if totalWeight > 0 then
     local rng = RNG()
     rng:SetSeed(seed, mod.rngShiftIdx)
@@ -314,6 +360,13 @@ function mod:transformKeyPiecesToKnifePieces()
   end
 end
 
+function mod:isRepentanceStageType()
+  local level = game:GetLevel()
+  local stageType = level:GetStageType()
+  
+  return stageType == StageType.STAGETYPE_REPENTANCE or stageType == StageType.STAGETYPE_REPENTANCE_B
+end
+
 function mod:isCurseOfTheLabyrinth()
   local level = game:GetLevel()
   local curses = level:GetCurses()
@@ -343,6 +396,79 @@ function mod:getDimension(roomDesc)
   return -1
 end
 
+function mod:forgetStageSeeds(s1, s2)
+  local seeds = game:GetSeeds()
+  
+  for i = s1, s2 do
+    seeds:ForgetStageSeed(i)
+  end
+end
+
+function mod:updateEid()
+  if EID and not game:IsGreedMode() then
+    local level = game:GetLevel()
+    local room = level:GetCurrentRoom()
+    
+    if room:GetType() == RoomType.ROOM_SACRIFICE then
+      -- english only for now
+      local descriptionAddition = ''
+      
+      -- in the dark room, you'll just be teleported back to the starting room so there's no override
+      if mod.state.spoilTeleport and not (level:GetStage() == LevelStage.STAGE6 and not level:IsAltStage()) then
+        local stageName = mod:getRandomStage(room:GetSpawnSeed())
+        if stageName == 'chest' then
+          descriptionAddition = descriptionAddition .. '#{{BlueBabySmall}} Teleporation override: Chest / ???'
+        elseif stageName == 'theVoid' then
+          descriptionAddition = descriptionAddition .. '#{{DeliriumSmall}} Teleporation override: The Void / Delirium'
+        elseif stageName == 'corpseII' then
+          descriptionAddition = descriptionAddition .. '#{{MotherSmall}} Teleporation override: Corpse II / Mother'
+        elseif stageName == 'home' then
+          descriptionAddition = descriptionAddition .. '#{{IsaacsRoom}} Teleporation override: Home / The Beast'
+        elseif stageName == 'sheol' then
+          descriptionAddition = descriptionAddition .. '#{{SatanSmall}} Teleporation override: Sheol / Satan'
+        elseif stageName == 'cathedral' then
+          descriptionAddition = descriptionAddition .. '#{{IsaacSmall}} Teleporation override: Cathedral / Isaac'
+        elseif stageName == 'depthsII' then
+          descriptionAddition = descriptionAddition .. '#{{MomBossSmall}} Teleporation override: Depths II / Mom'
+        elseif stageName == 'mausoleumII' then
+          descriptionAddition = descriptionAddition .. '#{{MomBossSmall}} Teleporation override: Mausoleum II / Mom'
+        elseif stageName == 'wombII' then
+          descriptionAddition = descriptionAddition .. '#{{MomsHeartSmall}} Teleporation override: Womb II / Mom\'s Heart'
+        elseif stageName == 'hush' then
+          descriptionAddition = descriptionAddition .. '#{{HushSmall}} Teleporation override: ??? / Hush'
+        elseif stageName == 'basementI' then
+          descriptionAddition = descriptionAddition .. '#{{Collectible636}} Teleporation override: Basement I / Restart' -- r key
+        elseif stageName == 'preAscent' then
+          descriptionAddition = descriptionAddition .. '#{{Collectible668}} Teleporation override: Mausoleum II / Dad\'s Note' -- dad's note
+        else -- darkRoom
+          descriptionAddition = descriptionAddition .. '#{{TheLambSmall}} Teleporation override: Dark Room / The Lamb'
+        end
+      end
+      
+      if mod.state.giveDreamCatcher then
+        descriptionAddition = descriptionAddition .. '#{{Collectible566}} Gives Dream Catcher' -- dream catcher
+      end
+      
+      local entityType = -999
+      local variant = -1
+      local subType = 12
+      local tblName = EID:getTableName(entityType, variant, subType)
+      
+      for lang, v in pairs(EID.descriptions) do
+        local tbl = v[tblName]
+        
+        if tbl and tbl[subType] then
+          local name = tbl[subType][2]
+          local description = tbl[subType][3]
+          
+          -- there isn't an add* function for this
+          EID.descriptions[lang].custom[entityType .. '.' .. variant .. '.' .. subType] = { subType, name, description .. descriptionAddition, EID._currentMod }
+        end
+      end
+    end
+  end
+end
+
 -- start ModConfigMenu --
 function mod:setupModConfigMenu()
   local category = 'Sac Room Teleport'
@@ -350,17 +476,19 @@ function mod:setupModConfigMenu()
     ModConfigMenu.RemoveSubcategory(category, v)
   end
   for _, v in ipairs({
-                       { name = 'Depths II / Mom'        , field = 'depthsII' },
-                       { name = 'Mausoleum II / Mom'     , field = 'mausoleumII' },
-                       { name = 'Womb II / Mom\'s Heart' , field = 'wombII' },
-                       { name = 'Corpse II / Mother'     , field = 'corpseII' },
-                       { name = '??? / Hush'             , field = 'hush' },
-                       { name = 'Sheol / Satan'          , field = 'sheol' },
-                       { name = 'Cathedral / Isaac'      , field = 'cathedral' },
-                       { name = 'Dark Room / The Lamb'   , field = 'darkRoom' },
-                       { name = 'Chest / ???'            , field = 'chest' },
-                       { name = 'The Void / Delirium'    , field = 'theVoid' },
-                       { name = 'Home / The Beast'       , field = 'home' },
+                       { name = 'Basement I / Restart'      , field = 'basementI' },
+                       { name = 'Depths II / Mom'           , field = 'depthsII' },
+                       { name = 'Mausoleum II / Mom'        , field = 'mausoleumII' },
+                       { name = 'Mausoleum II / Dad\'s Note', field = 'preAscent' },
+                       { name = 'Womb II / Mom\'s Heart'    , field = 'wombII' },
+                       { name = 'Corpse II / Mother'        , field = 'corpseII' },
+                       { name = '??? / Hush'                , field = 'hush' },
+                       { name = 'Sheol / Satan'             , field = 'sheol' },
+                       { name = 'Cathedral / Isaac'         , field = 'cathedral' },
+                       { name = 'Dark Room / The Lamb'      , field = 'darkRoom' },
+                       { name = 'Chest / ???'               , field = 'chest' },
+                       { name = 'The Void / Delirium'       , field = 'theVoid' },
+                       { name = 'Home / The Beast'          , field = 'home' },
                     })
   do
     ModConfigMenu.AddSetting(
@@ -376,6 +504,7 @@ function mod:setupModConfigMenu()
         end,
         OnChange = function(n)
           mod.state.stages[v.field] = n
+          mod:updateEid()
           mod:save()
         end,
         Info = { 'Choose relative weights', 'for random teleportation' }
@@ -384,6 +513,7 @@ function mod:setupModConfigMenu()
   end
   for i, v in ipairs({
                        { question = 'Give dream catcher on 12th spike hit?'  , field = 'giveDreamCatcher'               , info = { 'Dream catcher forces the correct', 'stage transition animation to play' } },
+                       { question = 'Spoil teleportation destination?'       , field = 'spoilTeleport'                  , info = { 'Requires external item descriptions' } },
                        { question = 'Open closet in home with key pieces?'   , field = 'openClosetWithKeyPieces'        , info = { 'Provides an alt way to open', 'the red room closet @ home' } },
                        { question = 'Transform key pieces into knife pieces?', field = 'transformKeyPiecesToKnifePieces', info = { 'Happens when you first enter', 'the mom boss fight in Mausoleum II' } },
                     })
@@ -405,6 +535,7 @@ function mod:setupModConfigMenu()
         end,
         OnChange = function(b)
           mod.state[v.field] = b
+          mod:updateEid()
           mod:save()
         end,
         Info = v.info
