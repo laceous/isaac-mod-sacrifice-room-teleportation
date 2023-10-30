@@ -440,7 +440,7 @@ function mod:updateEid()
           descriptionAddition = descriptionAddition .. '#{{Collectible636}} Teleporation override: Basement I / Restart' -- r key
         elseif stageName == 'preAscent' then
           descriptionAddition = descriptionAddition .. '#{{Collectible668}} Teleporation override: Mausoleum II / Dad\'s Note' -- dad's note
-        else -- darkRoom
+        elseif stageName == 'darkRoom' then
           descriptionAddition = descriptionAddition .. '#{{TheLambSmall}} Teleporation override: Dark Room / The Lamb'
         end
       end
