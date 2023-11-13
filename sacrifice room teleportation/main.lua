@@ -404,71 +404,81 @@ function mod:forgetStageSeeds(s1, s2)
   end
 end
 
+-- update -999.-1001.x instead of -999.-1.x as a workaround
 function mod:updateEid()
   if EID and not game:IsGreedMode() then
     local level = game:GetLevel()
     local room = level:GetCurrentRoom()
     
     if room:GetType() == RoomType.ROOM_SACRIFICE then
+      -- english only for now
+      local lang = 'en_us'
       local entityType = -999
-      local variant = -1
+      local variant = -1001 -- -1 is for sacrifice room spikes
       
       for subType = 1, 12 do
-        -- english only for now
-        local descriptionAddition = ''
+        local name = ''
+        local description = ''
         
         -- in the dark room, you'll just be teleported back to the starting room so there's no override
         if mod.state.spoilTeleport and not (level:GetStage() == LevelStage.STAGE6 and not level:IsAltStage()) then
           local stageName = mod:getRandomStage(room:GetSpawnSeed())
           if stageName == 'chest' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Chest / ??? ({{BlueBabySmall}})'
+            description = description .. '#{{12}} Teleporation override: Chest / ??? ({{BlueBabySmall}})'
           elseif stageName == 'theVoid' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: The Void / Delirium ({{DeliriumSmall}})'
+            description = description .. '#{{12}} Teleporation override: The Void / Delirium ({{DeliriumSmall}})'
           elseif stageName == 'corpseII' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Corpse II / Mother ({{MotherSmall}})'
+            description = description .. '#{{12}} Teleporation override: Corpse II / Mother ({{MotherSmall}})'
           elseif stageName == 'home' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Home ({{IsaacsRoom}}) / The Beast'
+            description = description .. '#{{12}} Teleporation override: Home ({{IsaacsRoom}}) / The Beast'
           elseif stageName == 'sheol' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Sheol / Satan ({{SatanSmall}})'
+            description = description .. '#{{12}} Teleporation override: Sheol / Satan ({{SatanSmall}})'
           elseif stageName == 'cathedral' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Cathedral / Isaac ({{IsaacSmall}})'
+            description = description .. '#{{12}} Teleporation override: Cathedral / Isaac ({{IsaacSmall}})'
           elseif stageName == 'depthsII' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Depths II / Mom ({{MomBossSmall}})'
+            description = description .. '#{{12}} Teleporation override: Depths II / Mom ({{MomBossSmall}})'
           elseif stageName == 'mausoleumII' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Mausoleum II / Mom ({{MomBossSmall}})'
+            description = description .. '#{{12}} Teleporation override: Mausoleum II / Mom ({{MomBossSmall}})'
           elseif stageName == 'wombII' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Womb II / Mom\'s Heart ({{MomsHeartSmall}})'
+            description = description .. '#{{12}} Teleporation override: Womb II / Mom\'s Heart ({{MomsHeartSmall}})'
           elseif stageName == 'hush' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: ??? / Hush ({{HushSmall}})'
+            description = description .. '#{{12}} Teleporation override: ??? / Hush ({{HushSmall}})'
           elseif stageName == 'basementI' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Basement I / Restart ({{Collectible636}})' -- r key
+            description = description .. '#{{12}} Teleporation override: Basement I / Restart ({{Collectible636}})' -- r key
           elseif stageName == 'preAscent' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Mausoleum II / Dad\'s Note ({{Collectible668}})' -- dad's note
+            description = description .. '#{{12}} Teleporation override: Mausoleum II / Dad\'s Note ({{Collectible668}})' -- dad's note
           elseif stageName == 'darkRoom' then
-            descriptionAddition = descriptionAddition .. '#{{12}} Teleporation override: Dark Room / The Lamb ({{TheLambSmall}})'
+            description = description .. '#{{12}} Teleporation override: Dark Room / The Lamb ({{TheLambSmall}})'
           end
         end
         
         if subType == 12 and mod.state.giveDreamCatcher then
-          descriptionAddition = descriptionAddition .. '#{{Collectible566}} Gives Dream Catcher' -- dream catcher
+          description = description .. '#{{Collectible566}} Gives Dream Catcher' -- dream catcher
         end
         
-        local tblName = EID:getTableName(entityType, variant, subType)
-        
-        for lang, v in pairs(EID.descriptions) do
-          local tbl = v[tblName]
-          
-          if tbl and tbl[subType] then
-            local name = tbl[subType][2]
-            local description = tbl[subType][3]
-            
-            -- there isn't an add* function for this
-            EID.descriptions[lang].custom[entityType .. '.' .. variant .. '.' .. subType] = { subType, name, description .. descriptionAddition, EID._currentMod }
-          end
-        end
+        -- there isn't an add* function for this
+        EID.descriptions[lang].custom[entityType .. '.' .. variant .. '.' .. subType] = { subType, name, description, EID._currentMod }
       end
     end
   end
+end
+
+-- sacrifice room descriptions do some string manipulation that doesn't allow us to just add new data to the "custom" table
+-- use our own modifier as a workaround: append -999.-1001.x to -999.-1.x
+function mod:setupEid()
+  EID:addDescriptionModifier('Sacrifice Room Teleporation Workaround', function(descObj)
+    local room = game:GetRoom()
+    return not game:IsGreedMode() and room:GetType() == RoomType.ROOM_SACRIFICE and descObj.ObjType == -999 and descObj.ObjVariant == -1
+  end, function(descObj)
+    local entityType = -999
+    local variant = -1001
+    local subType = EID:getAdjustedSubtype(descObj.ObjType, descObj.ObjVariant, descObj.ObjSubType)
+    local entry = EID:getDescriptionEntry('custom', entityType .. '.' .. variant .. '.' .. subType) -- will fallback to en_us
+    if entry then
+      descObj.Description = descObj.Description .. entry[3]
+    end
+    return descObj
+  end)
 end
 
 -- start ModConfigMenu --
@@ -553,6 +563,9 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, mod.onNewRoom)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.onPlayerUpdate)
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.onEntityTakeDmg, EntityType.ENTITY_PLAYER)
 
+if EID then
+  mod:setupEid()
+end
 if ModConfigMenu then
   mod:setupModConfigMenu()
 end
