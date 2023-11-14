@@ -77,12 +77,13 @@ function mod:onNewRoom()
   local room = level:GetCurrentRoom()
   local roomDesc = level:GetCurrentRoomDesc()
   local stage = level:GetStage()
+  local currentDimension = mod:getCurrentDimension()
   
   mod:updateEid()
   
   if mod.seed then
     if stage == LevelStage.STAGE6 and not level:IsAltStage() and -- dark room
-       level:GetCurrentRoomIndex() == level:GetStartingRoomIndex() and room:IsFirstVisit() and mod:getCurrentDimension() == 0
+       level:GetCurrentRoomIndex() == level:GetStartingRoomIndex() and room:IsFirstVisit() and currentDimension == 0
     then
       local stageName = mod:getRandomStage(mod.seed)
       local rng = RNG()
@@ -151,7 +152,7 @@ function mod:onNewRoom()
   
   if mod.state.openClosetWithKeyPieces then
     -- home
-    if stage == LevelStage.STAGE8 and roomDesc.GridIndex == 95 and mod:hasBothKeyPieces() then
+    if stage == LevelStage.STAGE8 and roomDesc.GridIndex == 95 and currentDimension == 0 and mod:hasBothKeyPieces() then
       level:MakeRedRoomDoor(roomDesc.GridIndex, DoorSlot.LEFT0)
       local door = room:GetDoor(DoorSlot.LEFT0)
       if door then
@@ -174,7 +175,7 @@ function mod:onNewRoom()
   if mod.state.transformKeyPiecesToKnifePieces then
     -- mausoleum ii/xl
     if (stage == LevelStage.STAGE3_2 or (mod:isCurseOfTheLabyrinth() and stage == LevelStage.STAGE3_1)) and mod:isRepentanceStageType() and
-       roomDesc.SafeGridIndex == level:GetRooms():Get(level:GetLastBossRoomListIndex()).SafeGridIndex and room:IsFirstVisit() and
+       roomDesc.SafeGridIndex == level:GetRooms():Get(level:GetLastBossRoomListIndex()).SafeGridIndex and room:IsFirstVisit() and currentDimension == 0 and
        not game:GetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED) and
        not game:GetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT) and
        not game:GetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH)
