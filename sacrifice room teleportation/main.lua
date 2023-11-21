@@ -425,7 +425,7 @@ function mod:updateEid()
         if mod.state.spoilTeleport and not (level:GetStage() == LevelStage.STAGE6 and not level:IsAltStage()) then
           local stageName = mod:getRandomStage(room:GetSpawnSeed())
           if stageName == 'chest' then
-            description = description .. '#{{12}} Teleporation override: Chest / ??? ({{BlueBabySmall}})'
+            description = description .. '#{{12}} Teleporation override: Chest ({{GoldenChest}}) / ???' -- BlueBabySmall
           elseif stageName == 'theVoid' then
             description = description .. '#{{12}} Teleporation override: The Void / Delirium ({{DeliriumSmall}})'
           elseif stageName == 'corpseII' then
@@ -449,7 +449,7 @@ function mod:updateEid()
           elseif stageName == 'preAscent' then
             description = description .. '#{{12}} Teleporation override: Mausoleum II / Dad\'s Note ({{Collectible668}})' -- dad's note
           elseif stageName == 'darkRoom' then
-            description = description .. '#{{12}} Teleporation override: Dark Room / The Lamb ({{TheLambSmall}})'
+            description = description .. '#{{12}} Teleporation override: Dark Room / The Lamb ({{TheLambSmall}})' -- RedChest
           end
         end
         
