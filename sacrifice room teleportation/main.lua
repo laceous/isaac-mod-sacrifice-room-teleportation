@@ -8,6 +8,8 @@ mod.seed = nil
 mod.stage = nil
 mod.rngShiftIdx = 35
 
+mod.eidDescriptions = { '', '', '', '', '', '', '', '', '', '', '', '' }
+
 mod.state = {}
 mod.state.giveDreamCatcher = true
 mod.state.spoilTeleport = false
@@ -405,20 +407,14 @@ function mod:forgetStageSeeds(s1, s2)
   end
 end
 
--- update -999.-1001.x instead of -999.-1.x as a workaround
 function mod:updateEid()
   if EID and not game:IsGreedMode() then
     local level = game:GetLevel()
     local room = level:GetCurrentRoom()
     
     if room:GetType() == RoomType.ROOM_SACRIFICE then
-      -- english only for now
-      local lang = 'en_us'
-      local entityType = -999
-      local variant = -1001 -- -1 is for sacrifice room spikes
-      
       for subType = 1, 12 do
-        local name = ''
+        -- english only for now
         local description = ''
         
         -- in the dark room, you'll just be teleported back to the starting room so there's no override
@@ -457,27 +453,19 @@ function mod:updateEid()
           description = description .. '#{{Collectible566}} Gives Dream Catcher' -- dream catcher
         end
         
-        -- there isn't an add* function for this
-        EID.descriptions[lang].custom[entityType .. '.' .. variant .. '.' .. subType] = { subType, name, description, EID._currentMod }
+        mod.eidDescriptions[subType] = description
       end
     end
   end
 end
 
--- sacrifice room descriptions do some string manipulation that doesn't allow us to just add new data to the "custom" table
--- use our own modifier as a workaround: append -999.-1001.x to -999.-1.x
 function mod:setupEid()
-  EID:addDescriptionModifier('Sacrifice Room Teleporation Workaround', function(descObj)
+  EID:addDescriptionModifier(mod.Name, function(descObj)
     local room = game:GetRoom()
     return not game:IsGreedMode() and room:GetType() == RoomType.ROOM_SACRIFICE and descObj.ObjType == -999 and descObj.ObjVariant == -1
   end, function(descObj)
-    local entityType = -999
-    local variant = -1001
     local subType = EID:getAdjustedSubtype(descObj.ObjType, descObj.ObjVariant, descObj.ObjSubType)
-    local entry = EID:getDescriptionEntry('custom', entityType .. '.' .. variant .. '.' .. subType) -- will fallback to en_us
-    if entry then
-      descObj.Description = descObj.Description .. entry[3]
-    end
+    EID:appendToDescription(descObj, mod.eidDescriptions[subType])
     return descObj
   end)
 end
