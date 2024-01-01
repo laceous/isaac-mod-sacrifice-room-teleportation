@@ -99,6 +99,7 @@ function mod:onNewRoom()
         mod:forgetStageSeeds(LevelStage.STAGE7, mod.stage)
         Isaac.ExecuteCommand('stage 12')
       elseif stageName == 'corpseII' then
+        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
         mod:forgetStageSeeds(LevelStage.STAGE4_2 + 1, mod.stage)
         Isaac.ExecuteCommand('stage 8c')
       elseif stageName == 'home' then
@@ -115,6 +116,7 @@ function mod:onNewRoom()
         game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
         game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
         game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
         mod:forgetStageSeeds(LevelStage.STAGE3_2, mod.stage)
         Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
       elseif stageName == 'mausoleumII' then
@@ -122,13 +124,16 @@ function mod:onNewRoom()
         game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
         game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
         game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
         mod:forgetStageSeeds(LevelStage.STAGE3_2 + 1, mod.stage)
         Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
       elseif stageName == 'wombII' then
         local stages = { '8', '8a', '8b' }
+        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
         mod:forgetStageSeeds(LevelStage.STAGE4_2, mod.stage)
         Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
       elseif stageName == 'hush' then
+        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
         mod:forgetStageSeeds(LevelStage.STAGE4_3, mod.stage)
         Isaac.ExecuteCommand('stage 9')
       elseif stageName == 'basementI' then
@@ -136,6 +141,7 @@ function mod:onNewRoom()
         game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
         game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
         game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
         mod:forgetStageSeeds(LevelStage.STAGE1_1, mod.stage)
         Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
       elseif stageName == 'preAscent' then
@@ -143,6 +149,7 @@ function mod:onNewRoom()
         game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
         game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, true)
         game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
         mod:forgetStageSeeds(LevelStage.STAGE3_2 + 1, mod.stage)
         Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
       end
