@@ -11,7 +11,7 @@ mod.rngShiftIdx = 35
 mod.eidDescriptions = { '', '', '', '', '', '', '', '', '', '', '', '' }
 
 mod.state = {}
-mod.state.giveDreamCatcher = true
+mod.state.giveDreamCatcher = REPENTOGON == nil
 mod.state.spoilTeleport = false
 mod.state.openClosetWithKeyPieces = false
 mod.state.transformKeyPiecesToKnifePieces = false
@@ -66,6 +66,20 @@ function mod:save()
   mod:SaveData(json.encode(mod.state))
 end
 
+function mod:onPreLevelSelect(stage, stageType)
+  if not mod.onGameStartHasRun then
+    return
+  end
+  
+  if game:IsGreedMode() then
+    return
+  end
+  
+  if stage == LevelStage.STAGE6 and stageType == StageType.STAGETYPE_ORIGINAL then -- dark room
+    return mod:goToNewStage(true)
+  end
+end
+
 function mod:onNewRoom()
   if not mod.onGameStartHasRun then
     return
@@ -87,72 +101,7 @@ function mod:onNewRoom()
     if stage == LevelStage.STAGE6 and not level:IsAltStage() and -- dark room
        level:GetCurrentRoomIndex() == level:GetStartingRoomIndex() and room:IsFirstVisit() and currentDimension == 0
     then
-      local stageName = mod:getRandomStage(mod.seed)
-      local rng = RNG()
-      rng:SetSeed(mod.seed, mod.rngShiftIdx)
-      mod.seed = nil
-      
-      if stageName == 'chest' then
-        mod:forgetStageSeeds(LevelStage.STAGE6, mod.stage)
-        Isaac.ExecuteCommand('stage 11a')
-      elseif stageName == 'theVoid' then
-        mod:forgetStageSeeds(LevelStage.STAGE7, mod.stage)
-        Isaac.ExecuteCommand('stage 12')
-      elseif stageName == 'corpseII' then
-        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
-        mod:forgetStageSeeds(LevelStage.STAGE4_2 + 1, mod.stage)
-        Isaac.ExecuteCommand('stage 8c')
-      elseif stageName == 'home' then
-        mod:forgetStageSeeds(LevelStage.STAGE8, mod.stage)
-        Isaac.ExecuteCommand('stage 13')
-      elseif stageName == 'sheol' then
-        mod:forgetStageSeeds(LevelStage.STAGE5, mod.stage)
-        Isaac.ExecuteCommand('stage 10')
-      elseif stageName == 'cathedral' then
-        mod:forgetStageSeeds(LevelStage.STAGE5, mod.stage)
-        Isaac.ExecuteCommand('stage 10a')
-      elseif stageName == 'depthsII' then
-        local stages = { '6', '6a', '6b' }
-        game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
-        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
-        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
-        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
-        mod:forgetStageSeeds(LevelStage.STAGE3_2, mod.stage)
-        Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
-      elseif stageName == 'mausoleumII' then
-        local stages = { '6c', '6d' }
-        game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
-        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
-        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
-        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
-        mod:forgetStageSeeds(LevelStage.STAGE3_2 + 1, mod.stage)
-        Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
-      elseif stageName == 'wombII' then
-        local stages = { '8', '8a', '8b' }
-        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
-        mod:forgetStageSeeds(LevelStage.STAGE4_2, mod.stage)
-        Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
-      elseif stageName == 'hush' then
-        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
-        mod:forgetStageSeeds(LevelStage.STAGE4_3, mod.stage)
-        Isaac.ExecuteCommand('stage 9')
-      elseif stageName == 'basementI' then
-        local stages = { '1', '1a', '1b' }
-        game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
-        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
-        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
-        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
-        mod:forgetStageSeeds(LevelStage.STAGE1_1, mod.stage)
-        Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
-      elseif stageName == 'preAscent' then
-        local stages = { '6c', '6d' }
-        game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
-        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, true)
-        game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
-        game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
-        mod:forgetStageSeeds(LevelStage.STAGE3_2 + 1, mod.stage)
-        Isaac.ExecuteCommand('stage ' .. stages[rng:RandomInt(#stages) + 1])
-      end
+      mod:goToNewStage(false)
     end
     
     mod.seed = nil
@@ -279,6 +228,107 @@ function mod:hasSpikesGte(pos, num)
   end
   
   return false
+end
+
+function mod:goToNewStage(doReturn)
+  if mod.seed then
+    local stage = nil
+    local stageType = nil
+    local stageName = mod:getRandomStage(mod.seed)
+    local rng = RNG()
+    rng:SetSeed(mod.seed, mod.rngShiftIdx)
+    
+    if stageName == 'chest' then
+      stage = LevelStage.STAGE6
+      stageType = StageType.STAGETYPE_WOTL
+      mod:forgetStageSeeds(stage, mod.stage)
+    elseif stageName == 'theVoid' then
+      stage = LevelStage.STAGE7
+      stageType = StageType.STAGETYPE_ORIGINAL
+      mod:forgetStageSeeds(stage, mod.stage)
+    elseif stageName == 'corpseII' then
+      stage = LevelStage.STAGE4_2
+      stageType = StageType.STAGETYPE_REPENTANCE
+      game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
+      mod:forgetStageSeeds(stage + 1, mod.stage)
+    elseif stageName == 'home' then
+      stage = LevelStage.STAGE8
+      stageType = StageType.STAGETYPE_ORIGINAL
+      mod:forgetStageSeeds(stage, mod.stage)
+    elseif stageName == 'sheol' then
+      stage = LevelStage.STAGE5
+      stageType = StageType.STAGETYPE_ORIGINAL
+      mod:forgetStageSeeds(stage, mod.stage)
+    elseif stageName == 'cathedral' then
+      stage = LevelStage.STAGE5
+      stageType = StageType.STAGETYPE_WOTL
+      mod:forgetStageSeeds(stage, mod.stage)
+    elseif stageName == 'depthsII' then
+      stage = LevelStage.STAGE3_2
+      stageType = { StageType.STAGETYPE_ORIGINAL, StageType.STAGETYPE_WOTL, StageType.STAGETYPE_AFTERBIRTH }
+      game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
+      game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
+      game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+      game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
+      mod:forgetStageSeeds(stage, mod.stage)
+    elseif stageName == 'mausoleumII' then
+      stage = LevelStage.STAGE3_2
+      stageType = { StageType.STAGETYPE_REPENTANCE, StageType.STAGETYPE_REPENTANCE_B }
+      game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
+      game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
+      game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+      game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
+      mod:forgetStageSeeds(stage + 1, mod.stage)
+    elseif stageName == 'wombII' then
+      stage = LevelStage.STAGE4_2
+      stageType = { StageType.STAGETYPE_ORIGINAL, StageType.STAGETYPE_WOTL, StageType.STAGETYPE_AFTERBIRTH }
+      game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
+      mod:forgetStageSeeds(stage, mod.stage)
+    elseif stageName == 'hush' then
+      stage = LevelStage.STAGE4_3
+      stageType = StageType.STAGETYPE_ORIGINAL
+      game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
+      mod:forgetStageSeeds(stage, mod.stage)
+    elseif stageName == 'basementI' then
+      stage = LevelStage.STAGE1_1
+      stageType = { StageType.STAGETYPE_ORIGINAL, StageType.STAGETYPE_WOTL, StageType.STAGETYPE_AFTERBIRTH }
+      game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
+      game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, false)
+      game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+      game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
+      mod:forgetStageSeeds(stage, mod.stage)
+    elseif stageName == 'preAscent' then
+      stage = LevelStage.STAGE3_2
+      stageType = { StageType.STAGETYPE_REPENTANCE, StageType.STAGETYPE_REPENTANCE_B }
+      game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
+      game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH_INIT, true)
+      game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
+      game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
+      mod:forgetStageSeeds(stage + 1, mod.stage)
+    end
+    
+    mod.seed = nil
+    mod.stage = nil
+    
+    if stage and stageType then
+      if type(stageType) == 'table' then
+        stageType = stageType[rng:RandomInt(#stageType) + 1]
+      end
+      
+      if doReturn then
+        return { stage, stageType }
+      end
+      
+      local stageTypeMap = {
+        [StageType.STAGETYPE_ORIGINAL]     = '',
+        [StageType.STAGETYPE_WOTL]         = 'a',
+        [StageType.STAGETYPE_AFTERBIRTH]   = 'b',
+        [StageType.STAGETYPE_REPENTANCE]   = 'c',
+        [StageType.STAGETYPE_REPENTANCE_B] = 'd',
+      }
+      Isaac.ExecuteCommand('stage ' .. stage .. stageTypeMap[stageType])
+    end
+  end
 end
 
 function mod:getRandomStage(seed)
@@ -555,6 +605,9 @@ end
 
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, mod.onGameStart)
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.onGameExit)
+if REPENTOGON then
+  mod:AddCallback(ModCallbacks.MC_PRE_LEVEL_SELECT, mod.onPreLevelSelect)
+end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, mod.onNewRoom)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.onPlayerUpdate)
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.onEntityTakeDmg, EntityType.ENTITY_PLAYER)

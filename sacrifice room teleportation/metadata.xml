@@ -26,6 +26,8 @@ You can also teleport to other important story levels:
 
 Unfortunately, the [i]StartStageTransition[/i] function can randomly crash the game. As a workaround, to show the proper stage transition animation, we'll give Dream Catcher starting on the 12th spike hit.
 
+Update: If you have Repentogon then you don't need to give yourself Dream Catcher anymore. Although, you can if you want to.
+
 Mod Config Menu will let you change the probability for each destination. Since you'll be getting key pieces from Sacrifice Rooms, there's also options to enable some extra functionality:
 [list]
     [*]Open the red room closet in Home with key pieces
@@ -35,7 +37,7 @@ Mod Config Menu will let you change the probability for each destination. Since 
 EID (External Item Descriptions) support has been added. There's now an option to spoil your teleportation destination.
 
 Note: There's an edge case where if you use a Sacrifice Room in the Dark Room, it will just teleport you back to the starting room rather than taking you somewhere new. This mod doesn't try to override that case.</description>
-    <version>1.10</version>
+    <version>1.11</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Rooms"/>
