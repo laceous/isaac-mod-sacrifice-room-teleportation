@@ -6,6 +6,7 @@ mod.onGameStartHasRun = false
 
 mod.seed = nil
 mod.stage = nil
+mod.rng = RNG()
 mod.rngShiftIdx = 35
 
 mod.eidDescriptions = { '', '', '', '', '', '', '', '', '', '', '', '' }
@@ -43,7 +44,7 @@ function mod:onGameStart()
       end
       if type(state.stages) == 'table' then
         for _, v in ipairs({ 'darkRoom', 'chest', 'theVoid', 'corpseII', 'home', 'sheol', 'cathedral', 'depthsII', 'mausoleumII', 'wombII', 'hush', 'basementI', 'preAscent' }) do
-          if math.type(state.stages[v]) == 'integer' then
+          if math.type(state.stages[v]) == 'integer' and state.stages[v] >= 0 and state.stages[v] <= 10 then
             mod.state.stages[v] = state.stages[v]
           end
         end
@@ -57,6 +58,7 @@ end
 
 function mod:onGameExit()
   mod:save()
+  mod:seedRng()
   mod.seed = nil
   mod.stage = nil
   mod.onGameStartHasRun = false
@@ -527,12 +529,70 @@ function mod:setupEid()
   end)
 end
 
+function mod:seedRng()
+  repeat
+    local rand = Random() -- 0 to 2^32
+    if rand > 0 then      -- if this is 0, it causes a crash later on
+      mod.rng:SetSeed(rand, mod.rngShiftIdx)
+    end
+  until(rand > 0)
+end
+
 -- start ModConfigMenu --
 function mod:setupModConfigMenu()
   local category = 'Sac Room Teleport'
   for _, v in ipairs({ 'Stages', 'Advanced' }) do
     ModConfigMenu.RemoveSubcategory(category, v)
   end
+  ModConfigMenu.AddSetting(
+    category,
+    'Stages',
+    {
+      Type = ModConfigMenu.OptionType.BOOLEAN,
+      CurrentSetting = function()
+        return false
+      end,
+      Display = function()
+        return 'Reset'
+      end,
+      OnChange = function(b)
+        for k, _ in pairs(mod.state.stages) do
+          if k == 'darkRoom' or k == 'chest' then
+            mod.state.stages[k] = 10
+          elseif k == 'theVoid' then
+            mod.state.stages[k] = 2
+          else
+            mod.state.stages[k] = 0
+          end
+        end
+        mod:updateEid()
+        mod:save()
+      end,
+      Info = { 'Reset the values below to their defaults' }
+    }
+  )
+  ModConfigMenu.AddSetting(
+    category,
+    'Stages',
+    {
+      Type = ModConfigMenu.OptionType.BOOLEAN,
+      CurrentSetting = function()
+        return false
+      end,
+      Display = function()
+        return 'Randomize'
+      end,
+      OnChange = function(b)
+        for k, _ in pairs(mod.state.stages) do
+          mod.state.stages[k] = mod.rng:RandomInt(11)
+        end
+        mod:updateEid()
+        mod:save()
+      end,
+      Info = { 'Randomize the values below' }
+    }
+  )
+  ModConfigMenu.AddSpace(category, 'Stages')
   for _, v in ipairs({
                        { name = 'Basement I / Restart'      , field = 'basementI' },
                        { name = 'Depths II / Mom'           , field = 'depthsII' },
@@ -603,6 +663,7 @@ function mod:setupModConfigMenu()
 end
 -- end ModConfigMenu --
 
+mod:seedRng()
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, mod.onGameStart)
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.onGameExit)
 if REPENTOGON then
