@@ -521,10 +521,10 @@ end
 function mod:setupEid()
   EID:addDescriptionModifier(mod.Name, function(descObj)
     local room = game:GetRoom()
-    return not game:IsGreedMode() and room:GetType() == RoomType.ROOM_SACRIFICE and descObj.ObjType == -999 and descObj.ObjVariant == -1
+    return not game:IsGreedMode() and room:GetType() == RoomType.ROOM_SACRIFICE and descObj.ObjType == -999 and descObj.ObjVariant == GridEntityType.GRID_SPIKES and
+           not (descObj.Name == 'Heart Sacrifice Room' or descObj.Name == 'Sheep Sacrifice Room' or descObj.Name == 'Crown Sacrifice Room') -- Sacrifice Room Rework
   end, function(descObj)
-    local subType = EID:getAdjustedSubtype(descObj.ObjType, descObj.ObjVariant, descObj.ObjSubType)
-    EID:appendToDescription(descObj, mod.eidDescriptions[subType])
+    EID:appendToDescription(descObj, mod.eidDescriptions[descObj.ObjSubType])
     return descObj
   end)
 end
