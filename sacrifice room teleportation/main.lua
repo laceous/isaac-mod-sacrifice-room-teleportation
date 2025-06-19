@@ -480,31 +480,31 @@ function mod:updateEid()
         if mod.state.spoilTeleport and not (level:GetStage() == LevelStage.STAGE6 and not level:IsAltStage()) then
           local stageName = mod:getRandomStage(room:GetSpawnSeed())
           if stageName == 'chest' then
-            description = description .. '#{{12}} Teleporation override: Chest / ??? ({{BlueBabySmall}})' -- GoldenChest
+            description = description .. '#{{12}} Teleportation override: Chest / ??? ({{BlueBabySmall}})' -- GoldenChest
           elseif stageName == 'theVoid' then
-            description = description .. '#{{12}} Teleporation override: The Void / Delirium ({{DeliriumSmall}})'
+            description = description .. '#{{12}} Teleportation override: The Void / Delirium ({{DeliriumSmall}})'
           elseif stageName == 'corpseII' then
-            description = description .. '#{{12}} Teleporation override: Corpse II / Mother ({{MotherSmall}})'
+            description = description .. '#{{12}} Teleportation override: Corpse II / Mother ({{MotherSmall}})'
           elseif stageName == 'home' then
-            description = description .. '#{{12}} Teleporation override: Home / The Beast ({{BeastSmall}})' -- IsaacsRoom
+            description = description .. '#{{12}} Teleportation override: Home / The Beast ({{BeastSmall}})' -- IsaacsRoom
           elseif stageName == 'sheol' then
-            description = description .. '#{{12}} Teleporation override: Sheol / Satan ({{SatanSmall}})'
+            description = description .. '#{{12}} Teleportation override: Sheol / Satan ({{SatanSmall}})'
           elseif stageName == 'cathedral' then
-            description = description .. '#{{12}} Teleporation override: Cathedral / Isaac ({{IsaacSmall}})'
+            description = description .. '#{{12}} Teleportation override: Cathedral / Isaac ({{IsaacSmall}})'
           elseif stageName == 'depthsII' then
-            description = description .. '#{{12}} Teleporation override: Depths II / Mom ({{MomBossSmall}})'
+            description = description .. '#{{12}} Teleportation override: Depths II / Mom ({{MomBossSmall}})'
           elseif stageName == 'mausoleumII' then
-            description = description .. '#{{12}} Teleporation override: Mausoleum II / Mom ({{MomBossSmall}})'
+            description = description .. '#{{12}} Teleportation override: Mausoleum II / Mom ({{MomBossSmall}})'
           elseif stageName == 'wombII' then
-            description = description .. '#{{12}} Teleporation override: Womb II / Mom\'s Heart ({{MomsHeartSmall}})'
+            description = description .. '#{{12}} Teleportation override: Womb II / Mom\'s Heart ({{MomsHeartSmall}})'
           elseif stageName == 'hush' then
-            description = description .. '#{{12}} Teleporation override: ??? / Hush ({{HushSmall}})'
+            description = description .. '#{{12}} Teleportation override: ??? / Hush ({{HushSmall}})'
           elseif stageName == 'basementI' then
-            description = description .. '#{{12}} Teleporation override: Basement I / Restart ({{Collectible636}})' -- r key
+            description = description .. '#{{12}} Teleportation override: Basement I / Restart ({{Collectible636}})' -- r key
           elseif stageName == 'preAscent' then
-            description = description .. '#{{12}} Teleporation override: Mausoleum II / Dad\'s Note ({{Collectible668}})' -- dad's note
+            description = description .. '#{{12}} Teleportation override: Mausoleum II / Dad\'s Note ({{Collectible668}})' -- dad's note
           elseif stageName == 'darkRoom' then
-            description = description .. '#{{12}} Teleporation override: Dark Room / The Lamb ({{TheLambSmall}})' -- RedChest
+            description = description .. '#{{12}} Teleportation override: Dark Room / The Lamb ({{TheLambSmall}})' -- RedChest
           end
         end
         
