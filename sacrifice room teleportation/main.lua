@@ -480,13 +480,13 @@ function mod:updateEid()
         if mod.state.spoilTeleport and not (level:GetStage() == LevelStage.STAGE6 and not level:IsAltStage()) then
           local stageName = mod:getRandomStage(room:GetSpawnSeed())
           if stageName == 'chest' then
-            description = description .. '#{{12}} Teleporation override: Chest ({{GoldenChest}}) / ???' -- BlueBabySmall
+            description = description .. '#{{12}} Teleporation override: Chest / ??? ({{BlueBabySmall}})' -- GoldenChest
           elseif stageName == 'theVoid' then
             description = description .. '#{{12}} Teleporation override: The Void / Delirium ({{DeliriumSmall}})'
           elseif stageName == 'corpseII' then
             description = description .. '#{{12}} Teleporation override: Corpse II / Mother ({{MotherSmall}})'
           elseif stageName == 'home' then
-            description = description .. '#{{12}} Teleporation override: Home ({{IsaacsRoom}}) / The Beast'
+            description = description .. '#{{12}} Teleporation override: Home / The Beast ({{BeastSmall}})' -- IsaacsRoom
           elseif stageName == 'sheol' then
             description = description .. '#{{12}} Teleporation override: Sheol / Satan ({{SatanSmall}})'
           elseif stageName == 'cathedral' then
@@ -524,7 +524,8 @@ function mod:setupEid()
     return not game:IsGreedMode() and room:GetType() == RoomType.ROOM_SACRIFICE and descObj.ObjType == -999 and descObj.ObjVariant == GridEntityType.GRID_SPIKES and
            not (descObj.Name == 'Heart Sacrifice Room' or descObj.Name == 'Sheep Sacrifice Room' or descObj.Name == 'Crown Sacrifice Room') -- Sacrifice Room Rework
   end, function(descObj)
-    EID:appendToDescription(descObj, mod.eidDescriptions[descObj.ObjSubType])
+    local subType = math.max(1, math.min(descObj.ObjSubType, 12))
+    EID:appendToDescription(descObj, mod.eidDescriptions[subType])
     return descObj
   end)
 end
