@@ -6,6 +6,8 @@ mod.onGameStartHasRun = false
 
 mod.seed = nil
 mod.stage = nil
+mod.collectible = nil
+mod.spawnStairs = false
 mod.rng = RNG()
 mod.rngShiftIdx = 35
 
@@ -29,6 +31,9 @@ mod.state.stages = { -- 0-10
   wombII = 0,
   hush = 0, -- ???
   basementI = 0,
+  basementI_d4 = 0,
+  basementI_genesis = 0,
+  basementI_deathCert = 0,
   preAscent = 0,
 }
 
@@ -43,7 +48,7 @@ function mod:onGameStart()
         end
       end
       if type(state.stages) == 'table' then
-        for _, v in ipairs({ 'darkRoom', 'chest', 'theVoid', 'corpseII', 'home', 'sheol', 'cathedral', 'depthsII', 'mausoleumII', 'wombII', 'hush', 'basementI', 'preAscent' }) do
+        for _, v in ipairs({ 'darkRoom', 'chest', 'theVoid', 'corpseII', 'home', 'sheol', 'cathedral', 'depthsII', 'mausoleumII', 'wombII', 'hush', 'basementI', 'basementI_d4', 'basementI_genesis', 'basementI_deathCert', 'preAscent' }) do
           if math.type(state.stages[v]) == 'integer' and state.stages[v] >= 0 and state.stages[v] <= 10 then
             mod.state.stages[v] = state.stages[v]
           end
@@ -61,6 +66,8 @@ function mod:onGameExit()
   mod:seedRng()
   mod.seed = nil
   mod.stage = nil
+  mod.collectible = nil
+  mod.spawnStairs = false
   mod.onGameStartHasRun = false
 end
 
@@ -142,6 +149,48 @@ function mod:onNewRoom()
     then
       mod:transformKeyPiecesToKnifePieces()
     end
+  end
+  
+  if mod.spawnStairs then
+    if stage == LevelStage.STAGE1_1 and not mod:isRepentanceStageType() and
+       room:GetType() == RoomType.ROOM_ISAACS and roomDesc.GridIndex == GridRooms.ROOM_DEVIL_IDX and roomDesc.Data.Subtype == 99 and
+       not game:GetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH)
+    then
+      for _, v in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.HEAVEN_LIGHT_DOOR, 0, false, false)) do
+        v:Remove()
+        Isaac.GridSpawn(GridEntityType.GRID_STAIRS, 3, v.Position, true)
+      end
+    end
+    
+    mod.spawnStairs = false
+  end
+end
+
+-- this needs to happen a frame after onNewRoom
+function mod:onUpdate()
+  if game:IsGreedMode() then
+    return
+  end
+  
+  if mod.collectible then
+    if mod.collectible == CollectibleType.COLLECTIBLE_D4 then
+      for i = 0, game:GetNumPlayers() - 1 do
+        local player = game:GetPlayer(i)
+        player:UseActiveItem(mod.collectible, 0, -1, 0) -- repentogon: player:RerollAllCollectibles
+      end
+      if REPENTOGON then
+        ItemOverlay.Show(Giantbook.D4, 3, nil)
+      end
+    elseif mod.collectible == CollectibleType.COLLECTIBLE_GENESIS then
+      local player = game:GetPlayer(0)
+      player:UseActiveItem(mod.collectible, 0, -1, 0)
+      mod.spawnStairs = true
+    elseif mod.collectible == CollectibleType.COLLECTIBLE_DEATH_CERTIFICATE then
+      local player = game:GetPlayer(0)
+      player:UseActiveItem(mod.collectible, 0, -1, 0)
+    end
+    
+    mod.collectible = nil
   end
 end
 
@@ -291,7 +340,7 @@ function mod:goToNewStage(doReturn)
       stageType = StageType.STAGETYPE_ORIGINAL
       game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
       mod:forgetStageSeeds(stage, mod.stage)
-    elseif stageName == 'basementI' then
+    elseif stageName == 'basementI' or stageName == 'basementI_d4' or stageName == 'basementI_genesis' or stageName == 'basementI_deathCert' then
       stage = LevelStage.STAGE1_1
       stageType = { StageType.STAGETYPE_ORIGINAL, StageType.STAGETYPE_WOTL, StageType.STAGETYPE_AFTERBIRTH }
       game:SetStateFlag(GameStateFlag.STATE_MAUSOLEUM_HEART_KILLED, false)
@@ -299,6 +348,14 @@ function mod:goToNewStage(doReturn)
       game:SetStateFlag(GameStateFlag.STATE_BACKWARDS_PATH, false)
       game:SetStateFlag(GameStateFlag.STATE_HEAVEN_PATH, false)
       mod:forgetStageSeeds(stage, mod.stage)
+      
+      if stageName == 'basementI_d4' then
+        mod.collectible = CollectibleType.COLLECTIBLE_D4
+      elseif stageName == 'basementI_genesis' then
+        mod.collectible = CollectibleType.COLLECTIBLE_GENESIS
+      elseif stageName == 'basementI_deathCert' then
+        mod.collectible = CollectibleType.COLLECTIBLE_DEATH_CERTIFICATE
+      end
     elseif stageName == 'preAscent' then
       stage = LevelStage.STAGE3_2
       stageType = { StageType.STAGETYPE_REPENTANCE, StageType.STAGETYPE_REPENTANCE_B }
@@ -501,6 +558,12 @@ function mod:updateEid()
             description = description .. '#{{12}} Teleportation override: ??? / Hush ({{HushSmall}})'
           elseif stageName == 'basementI' then
             description = description .. '#{{12}} Teleportation override: Basement I / Restart ({{Collectible636}})' -- r key
+          elseif stageName == 'basementI_d4' then
+            description = description .. '#{{12}} Teleportation override: Basement I / Restart ({{Collectible636}}+{{Collectible284}})' -- r key + d4
+          elseif stageName == 'basementI_genesis' then
+            description = description .. '#{{12}} Teleportation override: Basement I / Restart ({{Collectible636}}+{{Collectible622}})' -- r key + genesis
+          elseif stageName == 'basementI_deathCert' then
+            description = description .. '#{{12}} Teleportation override: Basement I / Restart ({{Collectible636}}+{{Collectible628}})' -- r key + death certificate
           elseif stageName == 'preAscent' then
             description = description .. '#{{12}} Teleportation override: Mausoleum II / Dad\'s Note ({{Collectible668}})' -- dad's note
           elseif stageName == 'darkRoom' then
@@ -549,27 +612,35 @@ function mod:setupModConfigMenu()
     category,
     'Stages',
     {
-      Type = ModConfigMenu.OptionType.BOOLEAN,
+      Type = ModConfigMenu.OptionType.NUMBER,
       CurrentSetting = function()
-        return false
+        return 2
       end,
+      Minimum = 1,
+      Maximum = 3,
       Display = function()
         return 'Reset'
       end,
-      OnChange = function(b)
-        for k, _ in pairs(mod.state.stages) do
-          if k == 'darkRoom' or k == 'chest' then
-            mod.state.stages[k] = 10
-          elseif k == 'theVoid' then
-            mod.state.stages[k] = 2
-          else
+      OnChange = function(n)
+        if n == 1 then
+          for k, _ in pairs(mod.state.stages) do
             mod.state.stages[k] = 0
+          end
+        else -- 3
+          for k, _ in pairs(mod.state.stages) do
+            if k == 'darkRoom' or k == 'chest' then
+              mod.state.stages[k] = 10
+            elseif k == 'theVoid' then
+              mod.state.stages[k] = 2
+            else
+              mod.state.stages[k] = 0
+            end
           end
         end
         mod:updateEid()
         mod:save()
       end,
-      Info = { 'Reset the values below to their defaults' }
+      Info = { 'Reset values to their defaults: select / right', 'Clear the values below: left' }
     }
   )
   ModConfigMenu.AddSetting(
@@ -595,19 +666,22 @@ function mod:setupModConfigMenu()
   )
   ModConfigMenu.AddSpace(category, 'Stages')
   for _, v in ipairs({
-                       { name = 'Basement I / Restart'      , field = 'basementI' },
-                       { name = 'Depths II / Mom'           , field = 'depthsII' },
-                       { name = 'Mausoleum II / Mom'        , field = 'mausoleumII' },
-                       { name = 'Mausoleum II / Dad\'s Note', field = 'preAscent' },
-                       { name = 'Womb II / Mom\'s Heart'    , field = 'wombII' },
-                       { name = 'Corpse II / Mother'        , field = 'corpseII' },
-                       { name = '??? / Hush'                , field = 'hush' },
-                       { name = 'Sheol / Satan'             , field = 'sheol' },
-                       { name = 'Cathedral / Isaac'         , field = 'cathedral' },
-                       { name = 'Dark Room / The Lamb'      , field = 'darkRoom' },
-                       { name = 'Chest / ???'               , field = 'chest' },
-                       { name = 'The Void / Delirium'       , field = 'theVoid' },
-                       { name = 'Home / The Beast'          , field = 'home' },
+                       { name = 'Basement I / Restart'       , field = 'basementI' },
+                       { name = 'Basement I / R + D4'        , field = 'basementI_d4' },
+                       { name = 'Basement I / R + Genesis'   , field = 'basementI_genesis' },
+                       { name = 'Basement I / R + Death Cert', field = 'basementI_deathCert' },
+                       { name = 'Depths II / Mom'            , field = 'depthsII' },
+                       { name = 'Mausoleum II / Mom'         , field = 'mausoleumII' },
+                       { name = 'Mausoleum II / Dad\'s Note' , field = 'preAscent' },
+                       { name = 'Womb II / Mom\'s Heart'     , field = 'wombII' },
+                       { name = 'Corpse II / Mother'         , field = 'corpseII' },
+                       { name = '??? / Hush'                 , field = 'hush' },
+                       { name = 'Sheol / Satan'              , field = 'sheol' },
+                       { name = 'Cathedral / Isaac'          , field = 'cathedral' },
+                       { name = 'Dark Room / The Lamb'       , field = 'darkRoom' },
+                       { name = 'Chest / ???'                , field = 'chest' },
+                       { name = 'The Void / Delirium'        , field = 'theVoid' },
+                       { name = 'Home / The Beast'           , field = 'home' },
                     })
   do
     ModConfigMenu.AddSetting(
@@ -671,6 +745,7 @@ if REPENTOGON then
   mod:AddCallback(ModCallbacks.MC_PRE_LEVEL_SELECT, mod.onPreLevelSelect)
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, mod.onNewRoom)
+mod:AddCallback(ModCallbacks.MC_POST_UPDATE, mod.onUpdate)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.onPlayerUpdate)
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.onEntityTakeDmg, EntityType.ENTITY_PLAYER)
 
